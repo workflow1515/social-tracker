@@ -1,0 +1,40 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg:           #F5F3F0;
+  --card:         #FFFFFF;
+  --border:       #EDE8EB;
+  --text:         #1C1618;
+  --text-muted:   #6E6268;
+  --pink:         #e879a0;
+  --pink-hover:   #d6628c;
+  --pink-light:   #fce8f3;
+  --sidebar-bg:   #2D2D2D;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color:      var(--text);
+  font-family: "Inter", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ─── Scrollbar ────────────────────────────────────────────────────────────── */
+::-webkit-scrollbar        { width: 5px; height: 5px; }
+::-webkit-scrollbar-track  { background: transparent; }
+::-webkit-scrollbar-thumb  { background: #D4C8CC; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #e879a0; }
+
+/* ─── Focus ring ───────────────────────────────────────────────────────────── */
+*:focus-visible {
+  outline: 2px solid #e879a0;
+  outline-offset: 2px;
+}
+
+@layer utilities {
+  .text-balance { text-wrap: balance; }
+}

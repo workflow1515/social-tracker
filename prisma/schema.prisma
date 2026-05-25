@@ -1,0 +1,72 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  admin
+  user
+}
+
+model User {
+  id            String   @id @default(cuid())
+  username      String   @unique
+  name          String
+  password_hash String
+  role          Role     @default(user)
+  is_active     Boolean  @default(true)
+  created_at    DateTime @default(now())
+
+  added_accounts SocialAccount[] @relation("AddedBy")
+  access_grants  UserAccess[]
+}
+
+// Which creator+network combinations a user can see, and whether they see all or own-only
+model UserAccess {
+  id         String  @id @default(cuid())
+  user       User    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  user_id    String
+  creator    Creator @relation(fields: [creator_id], references: [id], onDelete: Cascade)
+  creator_id String
+  network    String // "youtube" | "instagram" | "twitter"
+  see_all    Boolean @default(false)
+
+  @@unique([user_id, creator_id, network])
+}
+
+model Creator {
+  id       String          @id @default(cuid())
+  name     String
+  accounts SocialAccount[]
+  access   UserAccess[]
+}
+
+model SocialAccount {
+  id          String   @id @default(cuid())
+  network     String // "youtube" | "instagram" | "twitter"
+  external_id String // channel ID / username
+  creator     Creator  @relation(fields: [creator_id], references: [id])
+  creator_id  String
+  added_by    User     @relation("AddedBy", fields: [added_by_id], references: [id])
+  added_by_id String
+  name        String
+  avatar_url  String?
+  created_at  DateTime @default(now())
+
+  snapshots SocialSnapshot[]
+
+  @@unique([network, external_id])
+}
+
+model SocialSnapshot {
+  id         String        @id @default(cuid())
+  account    SocialAccount @relation(fields: [account_id], references: [id], onDelete: Cascade)
+  account_id String
+  followers  Int?
+  views      BigInt? // YouTube total views
+  taken_at   DateTime      @default(now())
+}
