@@ -6,9 +6,10 @@ import { signOut } from "next-auth/react";
 import type { SessionUser } from "@/lib/permissions";
 
 const NAV_ITEMS = [
-  { href: "/youtube",   label: "YouTube",   icon: YTIcon,   active: true  },
-  { href: "/instagram", label: "Instagram", icon: IGIcon,   active: false },
-  { href: "/twitter",   label: "Twitter",   icon: TWIcon,   active: false },
+  { href: "/youtube",   label: "YouTube",   icon: YTIcon,    active: true  },
+  { href: "/instagram", label: "Instagram", icon: IGIcon,    active: false },
+  { href: "/twitter",   label: "Twitter",   icon: TWIcon,    active: false },
+  { href: "/admin",     label: "Users",     icon: AdminIcon, active: true, adminOnly: true },
 ];
 
 function YTIcon() {
@@ -35,6 +36,19 @@ function TWIcon() {
   );
 }
 
+function AdminIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="w-5 h-5 fill-none stroke-current stroke-2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
+      <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+    </svg>
+  );
+}
+
+interface NavItem {
+  href: string; label: string; icon: () => JSX.Element; active: boolean; adminOnly?: boolean;
+}
+
 interface DashboardShellProps {
   user: SessionUser;
   children: React.ReactNode;
@@ -56,7 +70,7 @@ export function DashboardShell({ user, children }: DashboardShellProps) {
 
         {/* Nav */}
         <nav className="flex-1 px-3 py-4 space-y-1">
-          {NAV_ITEMS.map(({ href, label, icon: Icon, active }) => {
+          {(NAV_ITEMS as NavItem[]).filter((item) => !item.adminOnly || user.role === "admin").map(({ href, label, icon: Icon, active }) => {
             const isActive = pathname.startsWith(href);
             if (!active) {
               return (

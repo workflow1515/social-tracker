@@ -28,6 +28,8 @@ export const config = {
     "/youtube/:path*",
     "/instagram/:path*",
     "/twitter/:path*",
+    "/admin/:path*",
     "/api/youtube/:path*",
+    "/api/admin/:path*",
   ],
 };
