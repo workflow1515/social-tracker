@@ -7,7 +7,7 @@ import type { SessionUser } from "@/lib/permissions";
 
 const NAV_ITEMS = [
   { href: "/youtube",   label: "YouTube",   icon: YTIcon,    active: true  },
-  { href: "/instagram", label: "Instagram", icon: IGIcon,    active: false },
+  { href: "/instagram", label: "Instagram", icon: IGIcon,    active: true  },
   { href: "/twitter",   label: "Twitter",   icon: TWIcon,    active: false },
   { href: "/admin",     label: "Users",     icon: AdminIcon, active: true, adminOnly: true },
 ];
