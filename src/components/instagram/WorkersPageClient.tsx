@@ -121,13 +121,14 @@ export function WorkersPageClient({ workers, serviceError }: Props) {
       </div>
 
       <div className="bg-warm-card border border-warm-border rounded-2xl shadow-card overflow-hidden">
+        <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-warm-divide">
               <th className="px-5 py-3.5 text-left text-xs font-semibold text-ink-muted uppercase tracking-wide">Username</th>
               <th className="px-4 py-3.5 text-left text-xs font-semibold text-ink-muted uppercase tracking-wide">Proxy</th>
               <th className="px-4 py-3.5 text-left text-xs font-semibold text-ink-muted uppercase tracking-wide">Status</th>
-              <th className="px-3 py-3.5 w-48"/>
+              <th className="px-3 py-3.5"/>
             </tr>
           </thead>
           <tbody className="divide-y divide-warm-divide">
@@ -147,7 +148,7 @@ export function WorkersPageClient({ workers, serviceError }: Props) {
                     <span className="text-ink-muted">not logged in</span>
                   )}
                 </td>
-                <td className="px-3 py-3.5 text-right">
+                <td className="px-3 py-3.5 text-right whitespace-nowrap">
                   {twoFaFor === w.id ? (
                     <span className="flex items-center gap-1.5 justify-end">
                       <input
@@ -159,18 +160,18 @@ export function WorkersPageClient({ workers, serviceError }: Props) {
                         className="w-24 px-2 py-1.5 text-sm rounded-lg border border-warm-border bg-transparent focus:outline-none"
                       />
                       <button onClick={() => submit2fa(w.id)} disabled={busyId === w.id}
-                              className="text-sm px-3 py-1.5 rounded-lg bg-pink-primary text-white disabled:opacity-50">
+                              className="text-sm px-3 py-1.5 rounded-lg bg-pink-primary text-white disabled:opacity-50 whitespace-nowrap">
                         Submit
                       </button>
                     </span>
                   ) : (
                     <span className="flex items-center gap-1.5 justify-end">
                       <button onClick={() => login(w.id)} disabled={busyId === w.id}
-                              className="text-sm px-3 py-1.5 rounded-lg border border-warm-border hover:bg-warm-hover disabled:opacity-50">
+                              className="text-sm px-3 py-1.5 rounded-lg border border-warm-border hover:bg-warm-hover disabled:opacity-50 whitespace-nowrap">
                         {busyId === w.id ? "…" : "Login"}
                       </button>
                       <button onClick={() => removeWorker(w.id)} disabled={busyId === w.id}
-                              className="text-sm px-3 py-1.5 rounded-lg border border-warm-border hover:bg-warm-hover disabled:opacity-50">
+                              className="text-sm px-3 py-1.5 rounded-lg border border-warm-border hover:bg-warm-hover disabled:opacity-50 whitespace-nowrap">
                         Delete
                       </button>
                     </span>
@@ -180,6 +181,7 @@ export function WorkersPageClient({ workers, serviceError }: Props) {
             ))}
           </tbody>
         </table>
+        </div>
       </div>
     </div>
   )
