@@ -1,11 +1,13 @@
 // Fetches channel stats from YouTube Data API v3
 
 export interface YouTubeChannelData {
-  channelId: string
-  name: string
-  avatarUrl: string | null
+  channelId:   string
+  name:        string
+  avatarUrl:   string | null
   subscribers: number
-  views: bigint
+  views:       bigint
+  videoCount:  number
+  handle:      string | null
 }
 
 /**
@@ -21,7 +23,7 @@ export async function fetchYouTubeChannel(
   }
 
   // Determine whether we're looking up by ID or handle
-  const isHandle = channelIdOrHandle.startsWith("@");
+  const isHandle    = channelIdOrHandle.startsWith("@");
   const isChannelId = channelIdOrHandle.startsWith("UC") && !channelIdOrHandle.startsWith("@");
 
   let url: string;
@@ -47,9 +49,9 @@ export async function fetchYouTubeChannel(
     return null;
   }
 
-  const item = data.items[0];
-  const snippet = item.snippet ?? {};
-  const stats = item.statistics ?? {};
+  const item    = data.items[0];
+  const snippet = item.snippet    ?? {};
+  const stats   = item.statistics ?? {};
 
   return {
     channelId:   item.id as string,
@@ -57,6 +59,8 @@ export async function fetchYouTubeChannel(
     avatarUrl:   snippet.thumbnails?.default?.url ?? snippet.thumbnails?.medium?.url ?? null,
     subscribers: parseInt(stats.subscriberCount ?? "0", 10),
     views:       BigInt(stats.viewCount ?? "0"),
+    videoCount:  parseInt(stats.videoCount ?? "0", 10),
+    handle:      snippet.customUrl ? (snippet.customUrl.startsWith("@") ? snippet.customUrl : `@${snippet.customUrl}`) : null,
   };
 }
 
@@ -74,7 +78,7 @@ export function parseYouTubeInput(input: string): string {
 
   // Try to parse as URL
   try {
-    const u = new URL(trimmed);
+    const u         = new URL(trimmed);
     const pathParts = u.pathname.split("/").filter(Boolean);
 
     if (pathParts[0] === "channel" && pathParts[1]) {

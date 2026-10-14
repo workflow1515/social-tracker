@@ -3,14 +3,11 @@ import { prisma } from "@/lib/prisma";
 import { isAdmin } from "@/lib/permissions";
 import { YoutubePageClient } from "@/components/youtube/YoutubePageClient";
 
-// ─── Delta calculation ────────────────────────────────────────────────────────
-// Find the snapshot taken closest to (but before) N days ago, then subtract
-// from the most recent snapshot.
-
 interface SnapshotRow {
-  followers: number | null;
-  views:     bigint | null;
-  taken_at:  Date;
+  followers:   number | null;
+  views:       bigint | null;
+  video_count: number | null;
+  taken_at:    Date;
 }
 
 function getDelta(
@@ -23,7 +20,6 @@ function getDelta(
 
   const cutoff = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
 
-  // Find the snapshot taken closest to (but before or at) `cutoff`
   const older = snapshots
     .filter((s) => s.taken_at <= cutoff)
     .sort((a, b) => b.taken_at.getTime() - a.taken_at.getTime())[0];
@@ -51,20 +47,27 @@ export interface AccountRow {
   addedById:   string;
   creatorName: string;
   followers:   number | null;
-  views:       string | null; // serialized bigint → string
+  views:       string | null;
+  videoCount:  number | null;
+  handle:      string | null;
+  notes:       string | null;
   delta7d:     { followers: number | null; views: string | null };
   delta14d:    { followers: number | null; views: string | null };
   delta30d:    { followers: number | null; views: string | null };
 }
 
+export interface CreatorOption {
+  id:   string;
+  name: string;
+}
+
 export default async function YouTubePage() {
   const session = await getServerSession();
-  if (!session) return null; // layout handles redirect
+  if (!session) return null;
 
-  const user = session.user;
+  const user  = session.user;
   const admin = isAdmin(user);
 
-  // ── Fetch accounts visible to this user ──────────────────────────────────
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let accounts: any[];
 
@@ -75,22 +78,21 @@ export default async function YouTubePage() {
         creator:   { select: { name: true } },
         snapshots: {
           orderBy: { taken_at: "asc" },
-          select:  { followers: true, views: true, taken_at: true },
+          select:  { followers: true, views: true, video_count: true, taken_at: true },
         },
       },
       orderBy: { created_at: "asc" },
     });
   } else {
-    // Find all creator+network access grants for this user
     const grants = await prisma.userAccess.findMany({
-      where: { user_id: user.id, network: "youtube" },
+      where:  { user_id: user.id, network: "youtube" },
       select: { creator_id: true, see_all: true },
     });
 
     if (grants.length === 0) {
       accounts = [];
     } else {
-      const seeAllCreatorIds = grants.filter((g) => g.see_all).map((g) => g.creator_id);
+      const seeAllCreatorIds  = grants.filter((g) => g.see_all).map((g) => g.creator_id);
       const ownOnlyCreatorIds = grants.filter((g) => !g.see_all).map((g) => g.creator_id);
 
       accounts = await prisma.socialAccount.findMany({
@@ -109,7 +111,7 @@ export default async function YouTubePage() {
           creator:   { select: { name: true } },
           snapshots: {
             orderBy: { taken_at: "asc" },
-            select:  { followers: true, views: true, taken_at: true },
+            select:  { followers: true, views: true, video_count: true, taken_at: true },
           },
         },
         orderBy: { created_at: "asc" },
@@ -117,13 +119,19 @@ export default async function YouTubePage() {
     }
   }
 
-  // ── Build serializable rows ───────────────────────────────────────────────
+  // Fetch creators for the modal
+  const creators: CreatorOption[] = await prisma.creator.findMany({
+    orderBy: { name: "asc" },
+    select:  { id: true, name: true },
+  });
+
   const rows: AccountRow[] = accounts.map((acc) => {
-    const snaps = acc.snapshots;
+    const snaps  = acc.snapshots;
     const latest = snaps.length > 0 ? snaps[snaps.length - 1] : null;
 
-    const latestFollowers = latest?.followers ?? null;
-    const latestViews     = latest?.views     ?? null;
+    const latestFollowers = latest?.followers   ?? null;
+    const latestViews     = latest?.views       ?? null;
+    const latestVideos    = latest?.video_count ?? null;
 
     const d7  = getDelta(snaps, latestFollowers, latestViews, 7);
     const d14 = getDelta(snaps, latestFollowers, latestViews, 14);
@@ -138,6 +146,9 @@ export default async function YouTubePage() {
       creatorName: acc.creator.name,
       followers:   latestFollowers,
       views:       latestViews != null ? latestViews.toString() : null,
+      videoCount:  latestVideos,
+      handle:      acc.handle ?? null,
+      notes:       acc.notes ?? null,
       delta7d:  { followers: d7.followersDelta,  views: d7.viewsDelta  != null ? d7.viewsDelta.toString()  : null },
       delta14d: { followers: d14.followersDelta, views: d14.viewsDelta != null ? d14.viewsDelta.toString() : null },
       delta30d: { followers: d30.followersDelta, views: d30.viewsDelta != null ? d30.viewsDelta.toString() : null },
@@ -147,6 +158,7 @@ export default async function YouTubePage() {
   return (
     <YoutubePageClient
       accounts={rows}
+      creators={creators}
       currentUserId={user.id}
       isAdmin={admin}
     />

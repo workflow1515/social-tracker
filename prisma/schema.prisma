@@ -55,6 +55,8 @@ model SocialAccount {
   added_by_id String
   name        String
   avatar_url  String?
+  handle      String?
+  notes       String?
   created_at  DateTime @default(now())
 
   snapshots SocialSnapshot[]
@@ -68,5 +70,6 @@ model SocialSnapshot {
   account_id String
   followers  Int?
   views      BigInt? // YouTube total views
+  video_count Int?    // YouTube total video count
   taken_at   DateTime      @default(now())
 }

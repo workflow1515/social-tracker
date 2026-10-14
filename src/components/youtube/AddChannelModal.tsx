@@ -1,30 +1,32 @@
 "use client";
 
 import { useState, FormEvent, useRef, useEffect } from "react";
+import type { CreatorOption } from "@/app/(dashboard)/youtube/page";
 
 interface AddChannelModalProps {
+  creators: CreatorOption[];
   onClose:  () => void;
   onAdded:  () => void;
 }
 
-export function AddChannelModal({ onClose, onAdded }: AddChannelModalProps) {
-  const [input,   setInput]   = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error,   setError]   = useState("");
+export function AddChannelModal({ creators, onClose, onAdded }: AddChannelModalProps) {
+  const [input,     setInput]     = useState("");
+  const [creatorId, setCreatorId] = useState(creators[0]?.id ?? "");
+  const [loading,   setLoading]   = useState(false);
+  const [error,     setError]     = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     inputRef.current?.focus();
   }, []);
 
-  // Close on backdrop click
   function handleBackdrop(e: React.MouseEvent<HTMLDivElement>) {
     if (e.target === e.currentTarget) onClose();
   }
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    if (!input.trim()) return;
+    if (!input.trim() || !creatorId) return;
 
     setLoading(true);
     setError("");
@@ -33,7 +35,7 @@ export function AddChannelModal({ onClose, onAdded }: AddChannelModalProps) {
       const res = await fetch("/api/youtube/accounts", {
         method:  "POST",
         headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify({ input: input.trim() }),
+        body:    JSON.stringify({ input: input.trim(), creator_id: creatorId }),
       });
 
       const data = await res.json();
@@ -73,6 +75,28 @@ export function AddChannelModal({ onClose, onAdded }: AddChannelModalProps) {
 
         {/* Body */}
         <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
+          {/* Creator selector */}
+          <div>
+            <label htmlFor="creator-select" className="block text-sm font-medium text-ink mb-1.5">
+              Creator
+            </label>
+            {creators.length === 0 ? (
+              <p className="text-sm text-red-500">No creators found. Add a creator in the Users panel first.</p>
+            ) : (
+              <select
+                id="creator-select"
+                value={creatorId}
+                onChange={(e) => setCreatorId(e.target.value)}
+                className="w-full rounded-xl border border-warm-border bg-warm-input px-3.5 py-2.5 text-sm text-ink focus:border-pink-primary focus:ring-2 focus:ring-pink-primary/20 outline-none transition"
+              >
+                {creators.map((c) => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
+              </select>
+            )}
+          </div>
+
+          {/* Channel input */}
           <div>
             <label htmlFor="channel-input" className="block text-sm font-medium text-ink mb-1.5">
               Channel URL, ID, or handle
@@ -107,7 +131,7 @@ export function AddChannelModal({ onClose, onAdded }: AddChannelModalProps) {
             </button>
             <button
               type="submit"
-              disabled={loading || !input.trim()}
+              disabled={loading || !input.trim() || !creatorId || creators.length === 0}
               className="flex-1 rounded-xl bg-pink-primary hover:bg-pink-hover text-white text-sm font-semibold py-2.5 transition disabled:opacity-60 disabled:cursor-not-allowed"
             >
               {loading ? "Adding…" : "Add Channel"}

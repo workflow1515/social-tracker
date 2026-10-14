@@ -2,10 +2,8 @@
 
 import { useState, FormEvent } from "react";
 import { signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
-  const router = useRouter();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError]       = useState("");
@@ -27,7 +25,7 @@ export default function LoginPage() {
     if (result?.error) {
       setError("Invalid username or password.");
     } else {
-      router.push("/youtube");
+      window.location.href = "/youtube";
     }
   }
 
@@ -88,7 +86,7 @@ export default function LoginPage() {
               disabled={loading}
               className="w-full rounded-xl bg-pink-primary hover:bg-pink-hover text-white font-semibold py-2.5 text-sm transition disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              {loading ? "Signing in…" : "Sign In"}
+              {loading ? "Signing in\u2026" : "Sign In"}
             </button>
           </form>
         </div>

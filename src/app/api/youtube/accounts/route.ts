@@ -5,8 +5,6 @@ import { prisma } from "@/lib/prisma";
 import { fetchYouTubeChannel, parseYouTubeInput } from "@/lib/youtube";
 
 // ── GET /api/youtube/accounts ─────────────────────────────────────────────────
-// Returns YouTube accounts visible to the current user.
-
 export async function GET() {
   const session = await getServerSession();
   if (!session) {
@@ -34,8 +32,8 @@ export async function GET() {
       return NextResponse.json([]);
     }
 
-    const seeAllCreatorIds   = grants.filter((g) => g.see_all).map((g) => g.creator_id);
-    const ownOnlyCreatorIds  = grants.filter((g) => !g.see_all).map((g) => g.creator_id);
+    const seeAllCreatorIds  = grants.filter((g) => g.see_all).map((g) => g.creator_id);
+    const ownOnlyCreatorIds = grants.filter((g) => !g.see_all).map((g) => g.creator_id);
 
     accounts = await prisma.socialAccount.findMany({
       where: {
@@ -54,17 +52,14 @@ export async function GET() {
 }
 
 // ── POST /api/youtube/accounts ────────────────────────────────────────────────
-// Body: { input: string }
-// Parses the input as a YouTube channel URL/ID/handle,
-// fetches stats from YouTube API, creates SocialAccount + first snapshot.
-
+// Body: { input: string, creator_id: string }
 export async function POST(req: NextRequest) {
   const session = await getServerSession();
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  let body: { input?: string };
+  let body: { input?: string; creator_id?: string };
   try {
     body = await req.json();
   } catch {
@@ -74,6 +69,17 @@ export async function POST(req: NextRequest) {
   const rawInput = body.input?.trim();
   if (!rawInput) {
     return NextResponse.json({ error: "Channel URL, ID, or handle is required." }, { status: 400 });
+  }
+
+  const creatorId = body.creator_id?.trim();
+  if (!creatorId) {
+    return NextResponse.json({ error: "Please select a creator." }, { status: 400 });
+  }
+
+  // Verify creator exists
+  const creator = await prisma.creator.findUnique({ where: { id: creatorId } });
+  if (!creator) {
+    return NextResponse.json({ error: "Creator not found." }, { status: 404 });
   }
 
   // Parse input to a channel ID or handle
@@ -100,31 +106,26 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "This channel is already being tracked." }, { status: 409 });
   }
 
-  // Find or create a creator for the current user
-  // We use a simple heuristic: each channel gets its own creator named after the channel.
-  // Admins can reorganize creators later if needed.
-  const creator = await prisma.creator.create({
-    data: { name: channelData.name },
-  });
-
   // Create account + first snapshot in a transaction
   const account = await prisma.$transaction(async (tx) => {
     const acc = await tx.socialAccount.create({
       data: {
         network:     "youtube",
         external_id: channelData.channelId,
-        creator_id:  creator.id,
+        creator_id:  creatorId,
         added_by_id: session.user.id,
         name:        channelData.name,
         avatar_url:  channelData.avatarUrl,
+        handle:      channelData.handle,
       },
     });
 
     await tx.socialSnapshot.create({
       data: {
-        account_id: acc.id,
-        followers:  channelData.subscribers,
-        views:      channelData.views,
+        account_id:  acc.id,
+        followers:   channelData.subscribers,
+        views:       channelData.views,
+        video_count: channelData.videoCount,
       },
     });
 
