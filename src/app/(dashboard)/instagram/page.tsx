@@ -6,9 +6,8 @@ import { InstagramPageClient } from "@/components/instagram/InstagramPageClient"
 // ─── Delta calculation (same approach as the YouTube page) ────────────────────
 
 interface SnapshotRow {
-  followers:      number | null
-  avg_reel_views: number | null
-  taken_at:       number // unix seconds, from the Flask API
+  followers: number | null
+  taken_at:  number // unix seconds, from the Flask API
 }
 
 function getDelta(snapshots: SnapshotRow[], latestFollowers: number | null, days: number): number | null {
@@ -21,18 +20,17 @@ function getDelta(snapshots: SnapshotRow[], latestFollowers: number | null, days
 }
 
 export interface IgAccountRow {
-  id:            number
-  username:      string
-  displayName:   string | null
-  avatarUrl:     string | null
-  followers:     number | null
-  postsCount:    number | null
-  avgLikes:      number | null
-  avgComments:   number | null
-  avgReelViews:  number | null
-  delta7d:       number | null
-  delta14d:      number | null
-  delta30d:      number | null
+  id:             number
+  username:       string
+  displayName:    string | null
+  avatarUrl:      string | null
+  followers:      number | null
+  postsCount:     number | null
+  totalLikes:     number | null
+  totalReelViews: number | null
+  delta7d:        number | null
+  delta14d:       number | null
+  delta30d:       number | null
 }
 
 export default async function InstagramPage() {
@@ -55,18 +53,17 @@ export default async function InstagramPage() {
     rows = accounts.map((acc, i) => {
       const history = histories[i]
       return {
-        id:           acc.id,
-        username:     acc.username,
-        displayName:  acc.display_name,
-        avatarUrl:    acc.avatar_url,
-        followers:    acc.followers,
-        postsCount:   acc.posts_count,
-        avgLikes:     acc.avg_likes,
-        avgComments:  acc.avg_comments,
-        avgReelViews: acc.avg_reel_views,
-        delta7d:      getDelta(history, acc.followers, 7),
-        delta14d:     getDelta(history, acc.followers, 14),
-        delta30d:     getDelta(history, acc.followers, 30),
+        id:             acc.id,
+        username:       acc.username,
+        displayName:    acc.display_name,
+        avatarUrl:      acc.avatar_url,
+        followers:      acc.followers,
+        postsCount:     acc.posts_count,
+        totalLikes:     acc.total_likes,
+        totalReelViews: acc.total_reel_views,
+        delta7d:        getDelta(history, acc.followers, 7),
+        delta14d:       getDelta(history, acc.followers, 14),
+        delta30d:       getDelta(history, acc.followers, 30),
       }
     })
   } catch (err) {

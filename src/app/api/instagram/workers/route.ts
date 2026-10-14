@@ -18,13 +18,13 @@ export async function GET() {
 }
 
 // ── POST /api/instagram/workers ────────────────────────────────────────────
-// Body: { username: string, password: string, proxy?: string }
+// Body: { username: string, password: string, proxy?: string, totp_secret?: string }
 export async function POST(req: NextRequest) {
   const session = await getServerSession()
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   if (!isAdmin(session.user)) return NextResponse.json({ error: "Forbidden" }, { status: 403 })
 
-  let body: { username?: string; password?: string; proxy?: string }
+  let body: { username?: string; password?: string; proxy?: string; totp_secret?: string }
   try {
     body = await req.json()
   } catch {
@@ -38,7 +38,10 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    return NextResponse.json(await igApi.addWorker(username, password, body.proxy?.trim()), { status: 201 })
+    return NextResponse.json(
+      await igApi.addWorker(username, password, body.proxy?.trim(), body.totp_secret?.trim()),
+      { status: 201 }
+    )
   } catch (err) {
     const status = err instanceof InstagramTrackerError ? err.status : 502
     return NextResponse.json({ error: (err as Error).message }, { status })

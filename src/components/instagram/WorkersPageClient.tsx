@@ -16,11 +16,14 @@ export function WorkersPageClient({ workers, serviceError }: Props) {
   const [username, setUsername] = useState("")
   const [password, setPassword] = useState("")
   const [proxy, setProxy]       = useState("")
+  const [totpSecret, setTotpSecret] = useState("")
   const [adding, setAdding]     = useState(false)
   const [error, setError]       = useState<string | null>(null)
   const [busyId, setBusyId]     = useState<number | null>(null)
   const [twoFaFor, setTwoFaFor] = useState<number | null>(null)
   const [twoFaCode, setTwoFaCode] = useState("")
+  const [editingTotpFor, setEditingTotpFor] = useState<number | null>(null)
+  const [totpInput, setTotpInput] = useState("")
 
   const refresh = useCallback(() => startTransition(() => router.refresh()), [router])
 
@@ -32,11 +35,16 @@ export function WorkersPageClient({ workers, serviceError }: Props) {
       const res = await fetch("/api/instagram/workers", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username: username.trim(), password, proxy: proxy.trim() || undefined }),
+        body: JSON.stringify({
+          username: username.trim(),
+          password,
+          proxy: proxy.trim() || undefined,
+          totp_secret: totpSecret.trim() || undefined,
+        }),
       })
       const data = await res.json()
       if (!res.ok) { setError(data.error ?? "Failed to add worker."); return }
-      setUsername(""); setPassword(""); setProxy("")
+      setUsername(""); setPassword(""); setProxy(""); setTotpSecret("")
       refresh()
     } finally {
       setAdding(false)
@@ -88,15 +96,55 @@ export function WorkersPageClient({ workers, serviceError }: Props) {
     }
   }
 
+  function startEditTotp(w: IgWorker) {
+    setEditingTotpFor(w.id)
+    setTotpInput("")
+    setError(null)
+  }
+
+  async function saveTotp(id: number) {
+    setBusyId(id)
+    setError(null)
+    try {
+      const res = await fetch(`/api/instagram/workers/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ totp_secret: totpInput.trim() }),
+      })
+      const data = await res.json()
+      if (!res.ok) { setError(data.error ?? "Failed to save 2FA key."); return }
+      setEditingTotpFor(null)
+      setTotpInput("")
+      refresh()
+    } finally {
+      setBusyId(null)
+    }
+  }
+
+  async function clearTotp(id: number) {
+    if (!confirm("Remove the saved 2FA key for this worker?")) return
+    setBusyId(id)
+    try {
+      await fetch(`/api/instagram/workers/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ totp_secret: "" }),
+      })
+      refresh()
+    } finally {
+      setBusyId(null)
+    }
+  }
+
   return (
-    <div className="p-6 lg:p-8 max-w-4xl">
+    <div className="p-6 lg:p-8 max-w-5xl">
       <div className="mb-6">
         <Link href="/instagram" className="text-sm text-ink-muted hover:text-ink underline-offset-2 hover:underline">← Accounts</Link>
         <h1 className="text-2xl font-bold text-ink mt-2">Worker accounts</h1>
         <p className="text-sm text-ink-muted mt-1 max-w-2xl">
           These are the Instagram accounts used to do the scraping, not the accounts being tracked.
-          Add one, hit Login, and enter a 2FA code if Instagram asks for one. Once logged in, the
-          session is reused — no password prompt again unless it expires.
+          Add one, hit Login, and enter a 2FA code if Instagram asks for one — or save the account&apos;s
+          2FA secret key (the same one an authenticator app uses) so future logins answer it automatically.
         </p>
       </div>
 
@@ -112,8 +160,10 @@ export function WorkersPageClient({ workers, serviceError }: Props) {
                className="px-3 py-2 text-sm rounded-lg border border-warm-border bg-transparent focus:outline-none" />
         <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="password"
                className="px-3 py-2 text-sm rounded-lg border border-warm-border bg-transparent focus:outline-none" />
-        <input value={proxy} onChange={(e) => setProxy(e.target.value)} placeholder="proxy (optional) http://user:pass@host:port"
-               className="flex-1 min-w-[260px] px-3 py-2 text-sm rounded-lg border border-warm-border bg-transparent focus:outline-none" />
+        <input value={proxy} onChange={(e) => setProxy(e.target.value)} placeholder="proxy (optional)"
+               className="flex-1 min-w-[180px] px-3 py-2 text-sm rounded-lg border border-warm-border bg-transparent focus:outline-none" />
+        <input value={totpSecret} onChange={(e) => setTotpSecret(e.target.value)} placeholder="2FA secret key (optional)"
+               className="flex-1 min-w-[180px] px-3 py-2 text-sm rounded-lg border border-warm-border bg-transparent focus:outline-none" />
         <button onClick={addWorker} disabled={adding}
                 className="bg-pink-primary text-white text-sm font-semibold px-4 py-2 rounded-lg disabled:opacity-50">
           {adding ? "Adding…" : "Add worker"}
@@ -124,20 +174,52 @@ export function WorkersPageClient({ workers, serviceError }: Props) {
         <table className="w-full text-sm table-fixed">
           <thead>
             <tr className="border-b border-warm-divide">
-              <th className="px-5 py-3.5 text-left text-xs font-semibold text-ink-muted uppercase tracking-wide w-[22%]">Username</th>
-              <th className="px-4 py-3.5 text-left text-xs font-semibold text-ink-muted uppercase tracking-wide w-[33%]">Proxy</th>
-              <th className="px-4 py-3.5 text-left text-xs font-semibold text-ink-muted uppercase tracking-wide w-[18%]">Status</th>
-              <th className="px-3 py-3.5 w-[27%]"/>
+              <th className="px-5 py-3.5 text-left text-xs font-semibold text-ink-muted uppercase tracking-wide w-[18%]">Username</th>
+              <th className="px-4 py-3.5 text-left text-xs font-semibold text-ink-muted uppercase tracking-wide w-[22%]">Proxy</th>
+              <th className="px-4 py-3.5 text-left text-xs font-semibold text-ink-muted uppercase tracking-wide w-[20%]">2FA key</th>
+              <th className="px-4 py-3.5 text-left text-xs font-semibold text-ink-muted uppercase tracking-wide w-[14%]">Status</th>
+              <th className="px-3 py-3.5 w-[26%]"/>
             </tr>
           </thead>
           <tbody className="divide-y divide-warm-divide">
             {workers.length === 0 && (
-              <tr><td colSpan={4} className="px-5 py-8 text-center text-ink-muted">No worker accounts yet.</td></tr>
+              <tr><td colSpan={5} className="px-5 py-8 text-center text-ink-muted">No worker accounts yet.</td></tr>
             )}
             {workers.map((w) => (
               <tr key={w.id}>
                 <td className="px-5 py-3.5 font-medium text-ink truncate">@{w.username}</td>
                 <td className="px-4 py-3.5 text-ink-muted truncate" title={w.proxy ?? undefined}>{w.proxy || "—"}</td>
+                <td className="px-4 py-3.5">
+                  {editingTotpFor === w.id ? (
+                    <span className="flex items-center flex-wrap gap-1.5">
+                      <input
+                        autoFocus
+                        value={totpInput}
+                        onChange={(e) => setTotpInput(e.target.value)}
+                        onKeyDown={(e) => { if (e.key === "Enter") saveTotp(w.id) }}
+                        placeholder="secret key"
+                        className="w-28 px-2 py-1.5 text-sm rounded-lg border border-warm-border bg-transparent focus:outline-none"
+                      />
+                      <button onClick={() => saveTotp(w.id)} disabled={busyId === w.id}
+                              className="text-sm px-2.5 py-1.5 rounded-lg bg-pink-primary text-white disabled:opacity-50">
+                        Save
+                      </button>
+                      <button onClick={() => setEditingTotpFor(null)} className="text-sm px-2 text-ink-muted">
+                        Cancel
+                      </button>
+                    </span>
+                  ) : w.has_totp_secret ? (
+                    <span className="flex items-center gap-2">
+                      <span className="text-emerald-600 font-medium">saved</span>
+                      <button onClick={() => startEditTotp(w)} className="text-xs text-ink-muted hover:text-ink underline-offset-2 hover:underline">change</button>
+                      <button onClick={() => clearTotp(w.id)} disabled={busyId === w.id} className="text-xs text-ink-muted hover:text-red-500 underline-offset-2 hover:underline">remove</button>
+                    </span>
+                  ) : (
+                    <button onClick={() => startEditTotp(w)} className="text-sm text-ink-muted hover:text-ink underline-offset-2 hover:underline">
+                      + add key
+                    </button>
+                  )}
+                </td>
                 <td className="px-4 py-3.5">
                   {w.is_logged_in ? (
                     <span className="text-emerald-600 font-medium">logged in</span>

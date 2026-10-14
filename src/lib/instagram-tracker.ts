@@ -16,9 +16,8 @@ export type IgAccount = {
   created_at: number
   followers: number | null
   posts_count: number | null
-  avg_likes: number | null
-  avg_comments: number | null
-  avg_reel_views: number | null
+  total_likes: number | null
+  total_reel_views: number | null
   taken_at: number | null
 }
 
@@ -27,9 +26,8 @@ export type IgMetricSnapshot = {
   account_id: number
   followers: number | null
   posts_count: number | null
-  avg_likes: number | null
-  avg_comments: number | null
-  avg_reel_views: number | null
+  total_likes: number | null
+  total_reel_views: number | null
   taken_at: number
 }
 
@@ -37,6 +35,7 @@ export type IgWorker = {
   id: number
   username: string
   proxy: string | null
+  has_totp_secret: boolean
   is_logged_in: number
   last_error: string | null
   created_at: number
@@ -96,8 +95,10 @@ export const igApi = {
   accountHistory:  (id: number) => call<IgMetricSnapshot[]>(`/api/accounts/${id}/history`),
 
   listWorkers:     () => call<IgWorker[]>("/api/workers"),
-  addWorker:       (username: string, password: string, proxy?: string) =>
-    call<IgWorker>("/api/workers", { method: "POST", body: JSON.stringify({ username, password, proxy }) }),
+  addWorker:       (username: string, password: string, proxy?: string, totpSecret?: string) =>
+    call<IgWorker>("/api/workers", { method: "POST", body: JSON.stringify({ username, password, proxy, totp_secret: totpSecret }) }),
+  updateWorkerTotp: (id: number, totpSecret: string | null) =>
+    call<IgWorker>(`/api/workers/${id}`, { method: "PATCH", body: JSON.stringify({ totp_secret: totpSecret ?? "" }) }),
   deleteWorker:    (id: number) => call<{ ok: true }>(`/api/workers/${id}`, { method: "DELETE" }),
   loginWorker:     (id: number) => callLoginStep(`/api/workers/${id}/login`, { method: "POST" }),
   submit2fa:       (id: number, code: string) => callLoginStep(`/api/workers/${id}/2fa`, { method: "POST", body: JSON.stringify({ code }) }),

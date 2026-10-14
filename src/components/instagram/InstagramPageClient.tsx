@@ -213,9 +213,8 @@ export function InstagramPageClient({ accounts, serviceError }: Props) {
                   <th className="px-5 py-3.5 text-left text-xs font-semibold text-ink-muted uppercase tracking-wide w-[260px]">Account</th>
                   <th className="px-4 py-3.5 text-right text-xs font-semibold text-ink-muted uppercase tracking-wide">Followers</th>
                   <th className="px-4 py-3.5 text-right text-xs font-semibold text-ink-muted uppercase tracking-wide">Posts</th>
-                  <th className="px-4 py-3.5 text-right text-xs font-semibold text-ink-muted uppercase tracking-wide">Avg likes</th>
-                  <th className="px-4 py-3.5 text-right text-xs font-semibold text-ink-muted uppercase tracking-wide">Avg comments</th>
-                  <th className="px-4 py-3.5 text-right text-xs font-semibold text-ink-muted uppercase tracking-wide">Avg reel views</th>
+                  <th className="px-4 py-3.5 text-right text-xs font-semibold text-ink-muted uppercase tracking-wide">Total likes</th>
+                  <th className="px-4 py-3.5 text-right text-xs font-semibold text-ink-muted uppercase tracking-wide">Total reel views</th>
                   <th className="px-4 py-3.5 text-right text-xs font-semibold text-ink-muted uppercase tracking-wide">+7d</th>
                   <th className="px-4 py-3.5 text-right text-xs font-semibold text-ink-muted uppercase tracking-wide">+14d</th>
                   <th className="px-4 py-3.5 text-right text-xs font-semibold text-ink-muted uppercase tracking-wide">+30d</th>
@@ -246,9 +245,8 @@ export function InstagramPageClient({ accounts, serviceError }: Props) {
                     </td>
                     <td className="px-4 py-3.5 text-right font-medium text-ink tabular-nums">{fmt(acc.followers)}</td>
                     <td className="px-4 py-3.5 text-right text-ink-secondary tabular-nums">{fmt(acc.postsCount)}</td>
-                    <td className="px-4 py-3.5 text-right text-ink-secondary tabular-nums">{fmt(acc.avgLikes)}</td>
-                    <td className="px-4 py-3.5 text-right text-ink-secondary tabular-nums">{fmt(acc.avgComments)}</td>
-                    <td className="px-4 py-3.5 text-right text-ink-secondary tabular-nums">{fmt(acc.avgReelViews)}</td>
+                    <td className="px-4 py-3.5 text-right text-ink-secondary tabular-nums">{fmt(acc.totalLikes)}</td>
+                    <td className="px-4 py-3.5 text-right text-ink-secondary tabular-nums">{fmt(acc.totalReelViews)}</td>
                     <td className="px-4 py-3.5 text-right tabular-nums"><DeltaCell value={acc.delta7d} /></td>
                     <td className="px-4 py-3.5 text-right tabular-nums"><DeltaCell value={acc.delta14d} /></td>
                     <td className="px-4 py-3.5 text-right tabular-nums"><DeltaCell value={acc.delta30d} /></td>
