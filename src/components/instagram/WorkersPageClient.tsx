@@ -121,14 +121,13 @@ export function WorkersPageClient({ workers, serviceError }: Props) {
       </div>
 
       <div className="bg-warm-card border border-warm-border rounded-2xl shadow-card overflow-hidden">
-        <div className="overflow-x-auto">
-        <table className="w-full text-sm">
+        <table className="w-full text-sm table-fixed">
           <thead>
             <tr className="border-b border-warm-divide">
-              <th className="px-5 py-3.5 text-left text-xs font-semibold text-ink-muted uppercase tracking-wide">Username</th>
-              <th className="px-4 py-3.5 text-left text-xs font-semibold text-ink-muted uppercase tracking-wide">Proxy</th>
-              <th className="px-4 py-3.5 text-left text-xs font-semibold text-ink-muted uppercase tracking-wide">Status</th>
-              <th className="px-3 py-3.5"/>
+              <th className="px-5 py-3.5 text-left text-xs font-semibold text-ink-muted uppercase tracking-wide w-[22%]">Username</th>
+              <th className="px-4 py-3.5 text-left text-xs font-semibold text-ink-muted uppercase tracking-wide w-[33%]">Proxy</th>
+              <th className="px-4 py-3.5 text-left text-xs font-semibold text-ink-muted uppercase tracking-wide w-[18%]">Status</th>
+              <th className="px-3 py-3.5 w-[27%]"/>
             </tr>
           </thead>
           <tbody className="divide-y divide-warm-divide">
@@ -137,8 +136,8 @@ export function WorkersPageClient({ workers, serviceError }: Props) {
             )}
             {workers.map((w) => (
               <tr key={w.id}>
-                <td className="px-5 py-3.5 font-medium text-ink">@{w.username}</td>
-                <td className="px-4 py-3.5 text-ink-muted">{w.proxy || "—"}</td>
+                <td className="px-5 py-3.5 font-medium text-ink truncate">@{w.username}</td>
+                <td className="px-4 py-3.5 text-ink-muted truncate" title={w.proxy ?? undefined}>{w.proxy || "—"}</td>
                 <td className="px-4 py-3.5">
                   {w.is_logged_in ? (
                     <span className="text-emerald-600 font-medium">logged in</span>
@@ -148,30 +147,30 @@ export function WorkersPageClient({ workers, serviceError }: Props) {
                     <span className="text-ink-muted">not logged in</span>
                   )}
                 </td>
-                <td className="px-3 py-3.5 text-right whitespace-nowrap">
+                <td className="px-3 py-3.5 text-right">
                   {twoFaFor === w.id ? (
-                    <span className="flex items-center gap-1.5 justify-end">
+                    <span className="flex items-center flex-wrap gap-1.5 justify-end">
                       <input
                         autoFocus
                         value={twoFaCode}
                         onChange={(e) => setTwoFaCode(e.target.value)}
                         onKeyDown={(e) => { if (e.key === "Enter") submit2fa(w.id) }}
                         placeholder="2FA code"
-                        className="w-24 px-2 py-1.5 text-sm rounded-lg border border-warm-border bg-transparent focus:outline-none"
+                        className="w-20 px-2 py-1.5 text-sm rounded-lg border border-warm-border bg-transparent focus:outline-none"
                       />
                       <button onClick={() => submit2fa(w.id)} disabled={busyId === w.id}
-                              className="text-sm px-3 py-1.5 rounded-lg bg-pink-primary text-white disabled:opacity-50 whitespace-nowrap">
+                              className="text-sm px-2.5 py-1.5 rounded-lg bg-pink-primary text-white disabled:opacity-50">
                         Submit
                       </button>
                     </span>
                   ) : (
-                    <span className="flex items-center gap-1.5 justify-end">
+                    <span className="flex items-center flex-wrap gap-1.5 justify-end">
                       <button onClick={() => login(w.id)} disabled={busyId === w.id}
-                              className="text-sm px-3 py-1.5 rounded-lg border border-warm-border hover:bg-warm-hover disabled:opacity-50 whitespace-nowrap">
+                              className="text-sm px-2.5 py-1.5 rounded-lg border border-warm-border hover:bg-warm-hover disabled:opacity-50">
                         {busyId === w.id ? "…" : "Login"}
                       </button>
                       <button onClick={() => removeWorker(w.id)} disabled={busyId === w.id}
-                              className="text-sm px-3 py-1.5 rounded-lg border border-warm-border hover:bg-warm-hover disabled:opacity-50 whitespace-nowrap">
+                              className="text-sm px-2.5 py-1.5 rounded-lg border border-warm-border hover:bg-warm-hover disabled:opacity-50">
                         Delete
                       </button>
                     </span>
@@ -181,7 +180,6 @@ export function WorkersPageClient({ workers, serviceError }: Props) {
             ))}
           </tbody>
         </table>
-        </div>
       </div>
     </div>
   )
